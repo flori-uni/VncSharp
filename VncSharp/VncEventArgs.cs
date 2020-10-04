@@ -16,19 +16,24 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace VncSharp
 {
-	public class VncEventArgs : EventArgs
-	{
-	    public VncEventArgs(IDesktopUpdater updater)
-		{
-			DesktopUpdater = updater;
-		}
-		
-		/// <summary>
-		/// Gets the IDesktopUpdater object that will handling re-drawing the desktop.
-		/// </summary>
-		public IDesktopUpdater DesktopUpdater { get; }
-	}
+    public class VncEventArgs : EventArgs
+    {
+        public VncEventArgs(List<Rectangle> rectangles, Framebuffer buffer)
+        {
+            Rectangles = rectangles;
+            Buffer = buffer;
+        }
+
+        public Framebuffer Buffer { get;  }
+
+        /// <summary>
+        ///     Gets the changed Rectangles.
+        /// </summary>
+        public List<Rectangle> Rectangles { get; }
+    }
 }

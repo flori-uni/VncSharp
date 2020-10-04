@@ -16,20 +16,21 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 using System.Drawing;
+
 // ReSharper disable ArrangeAccessorOwnerBody
 
 namespace VncSharp
 {
-	/// <summary>
-	/// Base class for desktop clipping/scaling policies.  Used by RemoteDesktop.
-	/// </summary>
-	public abstract class VncDesktopTransformPolicy
-	{
-        protected VncClient vnc;
+    /// <summary>
+    ///     Base class for desktop clipping/scaling policies.  Used by RemoteDesktop.
+    /// </summary>
+    public abstract class VncDesktopTransformPolicy
+    {
         protected RemoteDesktop remoteDesktop;
+        protected VncClient vnc;
 
         public VncDesktopTransformPolicy(VncClient vnc,
-                                         RemoteDesktop remoteDesktop)
+            RemoteDesktop remoteDesktop)
         {
             this.vnc = vnc;
             this.remoteDesktop = remoteDesktop;
@@ -40,7 +41,7 @@ namespace VncSharp
             get { return false; }
         }
 
-	    public abstract Size AutoScrollMinSize { get; }
+        public abstract Size AutoScrollMinSize { get; }
 
         public abstract Rectangle AdjustUpdateRectangle(Rectangle updateRectangle);
 

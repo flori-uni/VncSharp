@@ -7,6 +7,6 @@ using System.Reflection;
 [assembly: AssemblyProduct("")]
 [assembly: AssemblyCopyright("GPL 2")]
 [assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]		
+[assembly: AssemblyCulture("")]
 
 [assembly: AssemblyVersion("1.2.0")]

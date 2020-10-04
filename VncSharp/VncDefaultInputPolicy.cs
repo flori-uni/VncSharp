@@ -20,29 +20,29 @@ using System.Drawing;
 
 namespace VncSharp
 {
-	/// <summary>
-	/// An interaction enabled version of IVncInputPolicy.
-	/// </summary>
-	public sealed class VncDefaultInputPolicy : IVncInputPolicy
-	{
-		private RfbProtocol rfb;
-		
-		public VncDefaultInputPolicy(RfbProtocol rfb)
-		{
-			Debug.Assert(rfb != null);
-			this.rfb = rfb;
-		}
+    /// <summary>
+    ///     An interaction enabled version of IVncInputPolicy.
+    /// </summary>
+    public sealed class VncDefaultInputPolicy : IVncInputPolicy
+    {
+        private readonly RfbProtocol rfb;
 
-		// Let all exceptions get caught in VncClient
+        public VncDefaultInputPolicy(RfbProtocol rfb)
+        {
+            Debug.Assert(rfb != null);
+            this.rfb = rfb;
+        }
 
-		public void WriteKeyboardEvent(uint keysym, bool pressed)
-		{
-			rfb.WriteKeyEvent(keysym, pressed);
-		}
+        // Let all exceptions get caught in VncClient
 
-		public void WritePointerEvent(byte buttonMask, Point point)
-		{
-			rfb.WritePointerEvent(buttonMask, point);
-		}
-	}
+        public void WriteKeyboardEvent(uint keysym, bool pressed)
+        {
+            rfb.WriteKeyEvent(keysym, pressed);
+        }
+
+        public void WritePointerEvent(byte buttonMask, Point point)
+        {
+            rfb.WritePointerEvent(buttonMask, point);
+        }
+    }
 }

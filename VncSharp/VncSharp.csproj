@@ -13,7 +13,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>VncSharpKey.snk</AssemblyOriginatorKeyFile>
     <ApplicationIcon>vncviewer.ico</ApplicationIcon>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -30,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -43,15 +44,23 @@
     <DebugSymbols>true</DebugSymbols>
     <DocumentationFile>
     </DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DotNetZip, Version=1.13.8.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
+      <HintPath>..\packages\DotNetZip.1.13.8\lib\net40\DotNetZip.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Encodings\Inflator.cs" />
+    <Compile Include="Encodings\TightDecoder.cs" />
+    <Compile Include="Encodings\TPixelReader.cs" />
     <Compile Include="KeyboardHook.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="Encodings\TightRectangle.cs" />
     <Compile Include="VncDesignModeDesktopPolicy.cs" />
     <Compile Include="VncDesktopTransformPolicy.cs" />
     <Compile Include="VncScaledDesktopPolicy.cs" />
@@ -122,6 +131,7 @@
     <Content Include="zlib.NET\readme.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="VncSharpKey.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

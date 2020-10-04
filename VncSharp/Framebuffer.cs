@@ -31,6 +31,11 @@ namespace VncSharp
 	    private readonly int[] pixels;   // I'm reusing the same pixel buffer for all update rectangles.
                                          // Pixel values will always be 32-bits to match GDI representation
 
+		public int[] Pixels
+        {
+            get { return pixels; }
+        }
+
 
         /// <summary>
         /// Creates a new Framebuffer with (width x height) pixels.
@@ -137,9 +142,7 @@ namespace VncSharp
 				return name;
 			}
 			set {
-				if (value == null)
-					throw new ArgumentNullException($"DesktopName");
-				name = value;
+                name = value ?? throw new ArgumentNullException($"DesktopName");
 			}
 		}
 
@@ -185,83 +188,80 @@ namespace VncSharp
 
             var buffer = new Framebuffer(width, height);
 
-            if ((bitsPerPixel == 16) && (depth == 16))
+            switch (bitsPerPixel)
             {
-                buffer.BitsPerPixel     = 16;
-                buffer.Depth            = 16;
-                buffer.BigEndian        = b[2] != 0;
-                buffer.TrueColour       = false;
-                buffer.RedMax           = 31;
-                buffer.GreenMax         = 63;
-                buffer.BlueMax          = 31;
-                buffer.RedShift         = 11;
-                buffer.GreenShift       = 5;
-                buffer.BlueShift        = 0;
-            }
-            else if ((bitsPerPixel) == 16 && (depth == 8))
-            {
-                buffer.BitsPerPixel     = 16;
-                buffer.Depth            = 8;
-                buffer.BigEndian        = b[2] != 0;
-                buffer.TrueColour       = false;
-                buffer.RedMax           = 31;
-                buffer.GreenMax         = 63;
-                buffer.BlueMax          = 31;
-                buffer.RedShift         = 11;
-                buffer.GreenShift       = 5;
-                buffer.BlueShift        = 0;
-            }
-            else if ((bitsPerPixel) == 8 && (depth == 8))
-            {
-                buffer.BitsPerPixel     = 8;
-                buffer.BigEndian        = b[2] != 0;
-                buffer.TrueColour       = false;
-                buffer.Depth            = 8;
-                buffer.RedMax           = 7;
-                buffer.GreenMax         = 7;
-                buffer.BlueMax          = 3;
-                buffer.RedShift         = 0;
-                buffer.GreenShift       = 3;
-                buffer.BlueShift        = 6;
-            }
-            else if ((bitsPerPixel) == 8 && (depth == 6))
-            {
-                buffer.BitsPerPixel     = 8;
-                buffer.Depth            = 6;
-                buffer.BigEndian        = b[2] != 0;
-                buffer.TrueColour       = false;
-                buffer.RedMax           = 3;
-                buffer.GreenMax         = 3;
-                buffer.BlueMax          = 3;
-                buffer.RedShift         = 4;
-                buffer.GreenShift       = 2;
-                buffer.BlueShift        = 0;
-            }
-            else if ((bitsPerPixel == 8) && (depth == 3))
-            {
-                buffer.BitsPerPixel     = 8;
-                buffer.Depth            = 3;
-                buffer.BigEndian        = b[2] != 0;
-                buffer.TrueColour       = false;
-                buffer.RedMax           = 1;
-                buffer.GreenMax         = 1;
-                buffer.BlueMax          = 1;
-                buffer.RedShift         = 2;
-                buffer.GreenShift       = 1;
-                buffer.BlueShift        = 0;
-            }
-            else
-            {
-                buffer.BitsPerPixel     = b[0];
-                buffer.Depth            = b[1];
-                buffer.BigEndian        = b[2] != 0;
-                buffer.TrueColour       = b[3] != 0;
-                buffer.RedMax           = b[5] | b[4] << 8;
-                buffer.GreenMax         = b[7] | b[6] << 8;
-                buffer.BlueMax          = b[9] | b[8] << 8;
-                buffer.RedShift         = b[10];
-                buffer.GreenShift       = b[11];
-                buffer.BlueShift        = b[12];
+                case 16 when depth == 16:
+                    buffer.BitsPerPixel     = 16;
+                    buffer.Depth            = 16;
+                    buffer.BigEndian        = b[2] != 0;
+                    buffer.TrueColour       = false;
+                    buffer.RedMax           = 31;
+                    buffer.GreenMax         = 63;
+                    buffer.BlueMax          = 31;
+                    buffer.RedShift         = 11;
+                    buffer.GreenShift       = 5;
+                    buffer.BlueShift        = 0;
+                    break;
+                case 16 when depth == 8:
+                    buffer.BitsPerPixel     = 16;
+                    buffer.Depth            = 8;
+                    buffer.BigEndian        = b[2] != 0;
+                    buffer.TrueColour       = false;
+                    buffer.RedMax           = 31;
+                    buffer.GreenMax         = 63;
+                    buffer.BlueMax          = 31;
+                    buffer.RedShift         = 11;
+                    buffer.GreenShift       = 5;
+                    buffer.BlueShift        = 0;
+                    break;
+                case 8 when depth == 8:
+                    buffer.BitsPerPixel     = 8;
+                    buffer.BigEndian        = b[2] != 0;
+                    buffer.TrueColour       = false;
+                    buffer.Depth            = 8;
+                    buffer.RedMax           = 7;
+                    buffer.GreenMax         = 7;
+                    buffer.BlueMax          = 3;
+                    buffer.RedShift         = 0;
+                    buffer.GreenShift       = 3;
+                    buffer.BlueShift        = 6;
+                    break;
+                case 8 when depth == 6:
+                    buffer.BitsPerPixel     = 8;
+                    buffer.Depth            = 6;
+                    buffer.BigEndian        = b[2] != 0;
+                    buffer.TrueColour       = false;
+                    buffer.RedMax           = 3;
+                    buffer.GreenMax         = 3;
+                    buffer.BlueMax          = 3;
+                    buffer.RedShift         = 4;
+                    buffer.GreenShift       = 2;
+                    buffer.BlueShift        = 0;
+                    break;
+                case 8 when depth == 3:
+                    buffer.BitsPerPixel     = 8;
+                    buffer.Depth            = 3;
+                    buffer.BigEndian        = b[2] != 0;
+                    buffer.TrueColour       = false;
+                    buffer.RedMax           = 1;
+                    buffer.GreenMax         = 1;
+                    buffer.BlueMax          = 1;
+                    buffer.RedShift         = 2;
+                    buffer.GreenShift       = 1;
+                    buffer.BlueShift        = 0;
+                    break;
+                default:
+                    buffer.BitsPerPixel     = b[0];
+                    buffer.Depth            = b[1];
+                    buffer.BigEndian        = b[2] != 0;
+                    buffer.TrueColour       = b[3] != 0;
+                    buffer.RedMax           = b[5] | b[4] << 8;
+                    buffer.GreenMax         = b[7] | b[6] << 8;
+                    buffer.BlueMax          = b[9] | b[8] << 8;
+                    buffer.RedShift         = b[10];
+                    buffer.GreenShift       = b[11];
+                    buffer.BlueShift        = b[12];
+                    break;
             }
 
 		    // Last 3 bytes are padding, ignore									

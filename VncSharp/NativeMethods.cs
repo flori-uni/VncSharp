@@ -8,7 +8,8 @@ namespace VncSharp
         #region Functions
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProcDelegate lpfn, IntPtr hMod, int dwThreadId);
+        internal static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProcDelegate lpfn, IntPtr hMod,
+            int dwThreadId);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -42,7 +43,8 @@ namespace VncSharp
         internal static extern int MapVirtualKey(int uCode, int uMapType);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal static extern int ToAscii(int uVirtKey, int uScanCode, byte[] lpKeyState, byte[] lpwTransKey, int fuState);
+        internal static extern int ToAscii(int uVirtKey, int uScanCode, byte[] lpKeyState, byte[] lpwTransKey,
+            int fuState);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
@@ -60,11 +62,11 @@ namespace VncSharp
         [StructLayout(LayoutKind.Sequential)]
         public class KBDLLHOOKSTRUCT
         {
-            internal int vkCode;
-            internal int scanCode;
-            internal int flags;
-            internal int time;
             internal IntPtr dwExtraInfo;
+            internal int flags;
+            internal int scanCode;
+            internal int time;
+            internal int vkCode;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -79,25 +81,26 @@ namespace VncSharp
         [StructLayout(LayoutKind.Sequential)]
         public class GUITHREADINFO
         {
+            internal int cbSize;
+            internal int flags;
+            internal IntPtr hwndActive;
+            internal IntPtr hwndCapture;
+            internal IntPtr hwndCaret;
+            internal IntPtr hwndFocus;
+            internal IntPtr hwndMenuOwner;
+            internal IntPtr hwndMoveSize;
+            internal RECT rcCaret;
+
             public GUITHREADINFO()
             {
                 cbSize = Convert.ToInt32(Marshal.SizeOf(this));
             }
-
-            internal int cbSize;
-            internal int flags;
-            internal IntPtr hwndActive;
-            internal IntPtr hwndFocus;
-            internal IntPtr hwndCapture;
-            internal IntPtr hwndMenuOwner;
-            internal IntPtr hwndMoveSize;
-            internal IntPtr hwndCaret;
-            internal RECT rcCaret;
         }
 
         #endregion
 
         #region Constants
+
         // GetAncestor
         public const int GA_ROOT = 2;
 
@@ -117,6 +120,7 @@ namespace VncSharp
         public const int KEYSTATE_PRESSED = 0x8000;
 
         #region Virtual Keys
+
         public const int VK_CANCEL = 0x0003;
         public const int VK_BACK = 0x0008;
         public const int VK_TAB = 0x0009;

@@ -19,26 +19,27 @@ using System.IO;
 
 namespace VncSharp.Encodings
 {
-	/// <summary>
-	/// A 16-bit PixelReader.
-	/// </summary>
-	public sealed class PixelReader16 : PixelReader
-	{
-		public PixelReader16(BinaryReader reader, Framebuffer framebuffer) : base(reader, framebuffer)
-		{
-		}
-	
-		public override int ReadPixel()
-		{
-			var b = reader.ReadBytes(2);
+    /// <summary>
+    ///     A 16-bit PixelReader.
+    /// </summary>
+    public sealed class PixelReader16 : PixelReader
+    {
+        public PixelReader16(BinaryReader reader, Framebuffer framebuffer) : base(reader, framebuffer)
+        {
+        }
 
-            var pixel = (ushort)((uint)b[0] & 0xFF | (uint)b[1] << 8);
+        public override int ReadPixel()
+        {
+            var b = reader.ReadBytes(2);
 
-			var red = (byte)(((pixel >> framebuffer.RedShift) & framebuffer.RedMax) * 255 / framebuffer.RedMax);
-			var green = (byte)(((pixel >> framebuffer.GreenShift) & framebuffer.GreenMax) * 255 / framebuffer.GreenMax);
-			var blue = (byte)(((pixel >> framebuffer.BlueShift) & framebuffer.BlueMax) * 255 / framebuffer.BlueMax);
+            var pixel = (ushort) (((uint) b[0] & 0xFF) | ((uint) b[1] << 8));
 
-			return ToGdiPlusOrder(red, green, blue);			
-		}
-	}
+            var red = (byte) (((pixel >> framebuffer.RedShift) & framebuffer.RedMax) * 255 / framebuffer.RedMax);
+            var green = (byte) (((pixel >> framebuffer.GreenShift) & framebuffer.GreenMax) * 255 /
+                                framebuffer.GreenMax);
+            var blue = (byte) (((pixel >> framebuffer.BlueShift) & framebuffer.BlueMax) * 255 / framebuffer.BlueMax);
+
+            return ToGdiPlusOrder(red, green, blue);
+        }
+    }
 }

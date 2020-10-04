@@ -16,12 +16,6 @@ namespace VncSharp
 {
     public class KeyboardHook
     {
-        // ReSharper disable InconsistentNaming
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, HookKeyMsgData lParam);
-        // ReSharper restore InconsistentNaming
-
         [Flags]
         public enum ModifierKeys
         {
@@ -40,21 +34,38 @@ namespace VncSharp
             RightWin = 0x0800
         }
 
-        protected class KeyNotificationEntry: IEquatable<KeyNotificationEntry>
-        {
-            public IntPtr WindowHandle;
-            public int KeyCode;
-            public ModifierKeys ModifierKeys;
-            public bool Block;
-
-            public bool Equals(KeyNotificationEntry obj)
-            {
-                return obj != null && WindowHandle == obj.WindowHandle && KeyCode == obj.KeyCode && ModifierKeys == obj.ModifierKeys && Block == obj.Block;
-            }
-        }
-
         private const string HookKeyMsgName = "HOOKKEYMSG-{EC4E5587-8F3A-4A56-A00B-2A5F827ABA79}";
         private static uint _hookKeyMsg;
+
+        private static int _referenceCount;
+        private static IntPtr _hook;
+
+        private static readonly NativeMethods.LowLevelKeyboardProcDelegate LowLevelKeyboardProcStaticDelegate =
+            LowLevelKeyboardProc;
+
+        private static readonly List<KeyNotificationEntry> NotificationEntries = new List<KeyNotificationEntry>();
+
+        private static readonly Dictionary<int, ModifierKeys> ModifierKeyTable = new Dictionary<int, ModifierKeys>
+        {
+            {NativeMethods.VK_SHIFT, ModifierKeys.Shift},
+            {NativeMethods.VK_LSHIFT, ModifierKeys.LeftShift},
+            {NativeMethods.VK_RSHIFT, ModifierKeys.RightShift},
+            {NativeMethods.VK_CONTROL, ModifierKeys.Control},
+            {NativeMethods.VK_LCONTROL, ModifierKeys.LeftControl},
+            {NativeMethods.VK_RCONTROL, ModifierKeys.RightControl},
+            {NativeMethods.VK_MENU, ModifierKeys.Alt},
+            {NativeMethods.VK_LMENU, ModifierKeys.LeftAlt},
+            {NativeMethods.VK_RMENU, ModifierKeys.RightAlt},
+            {NativeMethods.VK_LWIN, ModifierKeys.LeftWin},
+            {NativeMethods.VK_RWIN, ModifierKeys.RightWin}
+        };
+
+        public KeyboardHook()
+        {
+            _referenceCount++;
+            SetHook();
+        }
+
         public static uint HookKeyMsg
         {
             get
@@ -67,26 +78,11 @@ namespace VncSharp
             }
         }
 
-        // this is a custom structure that will be passed to
-        // the requested hWnd via a WM_APP_HOOKKEYMSG message
-        [StructLayout(LayoutKind.Sequential)]
-        public class HookKeyMsgData
-        {
-            public int KeyCode;
-            public ModifierKeys ModifierKeys;
-            public bool WasBlocked;
-        }
-
-        private static int _referenceCount;
-        private static IntPtr _hook;
-        private static readonly NativeMethods.LowLevelKeyboardProcDelegate LowLevelKeyboardProcStaticDelegate = LowLevelKeyboardProc;
-        private static readonly List<KeyNotificationEntry> NotificationEntries = new List<KeyNotificationEntry>();
-
-        public KeyboardHook()
-        {
-            _referenceCount++;
-            SetHook();
-        }
+        // ReSharper disable InconsistentNaming
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, HookKeyMsgData lParam);
+        // ReSharper restore InconsistentNaming
 
         ~KeyboardHook()
         {
@@ -101,7 +97,8 @@ namespace VncSharp
             var curProcess = Process.GetCurrentProcess();
             var curModule = curProcess.MainModule;
 
-            var hook = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, LowLevelKeyboardProcStaticDelegate, NativeMethods.GetModuleHandle(curModule.ModuleName), 0);
+            var hook = NativeMethods.SetWindowsHookEx(NativeMethods.WH_KEYBOARD_LL, LowLevelKeyboardProcStaticDelegate,
+                NativeMethods.GetModuleHandle(curModule.ModuleName), 0);
             if (hook == IntPtr.Zero)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
 
@@ -122,7 +119,7 @@ namespace VncSharp
             var result = 0;
 
             if (nCode != NativeMethods.HC_ACTION)
-                return result != 0 ? new IntPtr(result) : NativeMethods.CallNextHookEx(_hook, nCode, wParam, lParam);
+                return NativeMethods.CallNextHookEx(_hook, nCode, wParam, lParam);
             // ReSharper disable once SwitchStatementMissingSomeCases
             switch (wParamInt)
             {
@@ -167,10 +164,7 @@ namespace VncSharp
                 }
                 catch (Win32Exception e)
                 {
-                    if (e.NativeErrorCode != 0)
-                    {
-                        throw;
-                    }
+                    if (e.NativeErrorCode != 0) throw;
                 }
 
             return result;
@@ -185,29 +179,13 @@ namespace VncSharp
             throw new Win32Exception(except);
         }
 
-        private static readonly Dictionary<int, ModifierKeys> ModifierKeyTable = new Dictionary<int, ModifierKeys>
-        {
-            { NativeMethods.VK_SHIFT, ModifierKeys.Shift },
-            { NativeMethods.VK_LSHIFT, ModifierKeys.LeftShift },
-            { NativeMethods.VK_RSHIFT, ModifierKeys.RightShift },
-            { NativeMethods.VK_CONTROL, ModifierKeys.Control },
-            { NativeMethods.VK_LCONTROL, ModifierKeys.LeftControl },
-            { NativeMethods.VK_RCONTROL, ModifierKeys.RightControl },
-            { NativeMethods.VK_MENU, ModifierKeys.Alt },
-            { NativeMethods.VK_LMENU, ModifierKeys.LeftAlt },
-            { NativeMethods.VK_RMENU, ModifierKeys.RightAlt },
-            { NativeMethods.VK_LWIN, ModifierKeys.LeftWin },
-            { NativeMethods.VK_RWIN, ModifierKeys.RightWin }
-        };
-
         public static ModifierKeys GetModifierKeyState()
         {
             var modifierKeyState = ModifierKeys.None;
 
             foreach (var pair in ModifierKeyTable)
-            {
-                if ((NativeMethods.GetAsyncKeyState(pair.Key) & NativeMethods.KEYSTATE_PRESSED) != 0) modifierKeyState |= pair.Value;
-            }
+                if ((NativeMethods.GetAsyncKeyState(pair.Key) & NativeMethods.KEYSTATE_PRESSED) != 0)
+                    modifierKeyState |= pair.Value;
 
             if ((modifierKeyState & ModifierKeys.LeftWin) != 0) modifierKeyState |= ModifierKeys.Win;
             if ((modifierKeyState & ModifierKeys.RightWin) != 0) modifierKeyState |= ModifierKeys.Win;
@@ -217,8 +195,10 @@ namespace VncSharp
 
         private static bool ModifierKeysMatch(ModifierKeys requestedKeys, ModifierKeys pressedKeys)
         {
-            if ((requestedKeys & ModifierKeys.Shift) != 0) pressedKeys &= ~(ModifierKeys.LeftShift | ModifierKeys.RightShift);
-            if ((requestedKeys & ModifierKeys.Control) != 0) pressedKeys &= ~(ModifierKeys.LeftControl | ModifierKeys.RightControl);
+            if ((requestedKeys & ModifierKeys.Shift) != 0)
+                pressedKeys &= ~(ModifierKeys.LeftShift | ModifierKeys.RightShift);
+            if ((requestedKeys & ModifierKeys.Control) != 0)
+                pressedKeys &= ~(ModifierKeys.LeftControl | ModifierKeys.RightControl);
             if ((requestedKeys & ModifierKeys.Alt) != 0) pressedKeys &= ~(ModifierKeys.LeftAlt | ModifierKeys.RightAlt);
             if ((requestedKeys & ModifierKeys.Win) != 0) pressedKeys &= ~(ModifierKeys.LeftWin | ModifierKeys.RightWin);
             return requestedKeys == pressedKeys;
@@ -229,7 +209,8 @@ namespace VncSharp
             RequestKeyNotification(windowHandle, keyCode, ModifierKeys.None, block);
         }
 
-        public static void RequestKeyNotification(IntPtr windowHandle, int keyCode, ModifierKeys modifierKeys = ModifierKeys.None, bool block = false)
+        public static void RequestKeyNotification(IntPtr windowHandle, int keyCode,
+            ModifierKeys modifierKeys = ModifierKeys.None, bool block = false)
         {
             var newNotificationEntry = new KeyNotificationEntry
             {
@@ -240,7 +221,8 @@ namespace VncSharp
             };
 
             foreach (var notificationEntry in NotificationEntries)
-                if (notificationEntry == newNotificationEntry) return;
+                if (notificationEntry == newNotificationEntry)
+                    return;
 
             NotificationEntries.Add(newNotificationEntry);
         }
@@ -250,7 +232,8 @@ namespace VncSharp
             CancelKeyNotification(windowHandle, keyCode, ModifierKeys.None, block);
         }
 
-        private static void CancelKeyNotification(IntPtr windowHandle, int keyCode, ModifierKeys modifierKeys = ModifierKeys.None, bool block = false)
+        private static void CancelKeyNotification(IntPtr windowHandle, int keyCode,
+            ModifierKeys modifierKeys = ModifierKeys.None, bool block = false)
         {
             var notificationEntry = new KeyNotificationEntry
             {
@@ -261,6 +244,30 @@ namespace VncSharp
             };
 
             NotificationEntries.Remove(notificationEntry);
+        }
+
+        protected class KeyNotificationEntry : IEquatable<KeyNotificationEntry>
+        {
+            public bool Block;
+            public int KeyCode;
+            public ModifierKeys ModifierKeys;
+            public IntPtr WindowHandle;
+
+            public bool Equals(KeyNotificationEntry obj)
+            {
+                return obj != null && WindowHandle == obj.WindowHandle && KeyCode == obj.KeyCode &&
+                       ModifierKeys == obj.ModifierKeys && Block == obj.Block;
+            }
+        }
+
+        // this is a custom structure that will be passed to
+        // the requested hWnd via a WM_APP_HOOKKEYMSG message
+        [StructLayout(LayoutKind.Sequential)]
+        public class HookKeyMsgData
+        {
+            public int KeyCode;
+            public ModifierKeys ModifierKeys;
+            public bool WasBlocked;
         }
     }
 }
